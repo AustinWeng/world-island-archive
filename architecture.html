@@ -1,69 +1,210 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>世界島資料系統架構</title></head><body><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>世界島管委會資料庫 · 受保護</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%9D%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<title>世界島資料系統架構</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;
-font-family:-apple-system,"PingFang TC","Noto Sans TC",system-ui,sans-serif;
-background:linear-gradient(135deg,#1E3A5F 0%,#2D5A8C 55%,#4A90C2 100%);padding:24px}
-.card{width:100%;max-width:390px;background:#fff;border-radius:6px;
-box-shadow:0 4px 16px rgba(15,42,68,.16);padding:40px 32px;text-align:center}
-h1{font-size:20px;color:#1E3A5F;font-weight:700;letter-spacing:.5px}
-.sub{margin-top:8px;font-size:13.5px;color:#64748b;line-height:1.6}
-.field{margin-top:26px;text-align:left}
-label{font-size:12.5px;color:#475569;font-weight:600}
-input{width:100%;margin-top:7px;padding:13px 15px;font-size:16px;border:1.5px solid #cbd5e1;
-border-radius:11px;outline:none;transition:border-color .15s;letter-spacing:2px}
-input:focus{border-color:#2D5A8C}
-button{width:100%;margin-top:18px;padding:13px;font-size:15px;font-weight:700;color:#fff;
-background:#1E3A5F;border:none;border-radius:11px;cursor:pointer;transition:background .15s}
-button:hover{background:#2D5A8C}button:disabled{background:#94a3b8;cursor:default}
-.status{margin-top:14px;font-size:13px;min-height:18px}
-.status.err{color:#dc2626}.status.ok{color:#2D5A8C}
-.foot{margin-top:22px;font-size:11.5px;color:#94a3b8;line-height:1.6}
+  :root{
+    --bg:#F7F3E9; --card:#FFFDF6; --ink:#2B2620; --ink2:#6E6455;
+    --blue:#1E3A5F; --blue-soft:rgba(30,58,95,.08);
+    --green:#4A6B50; --green-soft:rgba(74,107,80,.09);
+    --gold:#8A6D3B; --gold-soft:rgba(138,109,59,.10);
+    --red:#A64833; --red-soft:rgba(166,72,51,.09);
+    --line:rgba(43,38,32,.16); --line-strong:rgba(43,38,32,.32);
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --serif:"Songti TC","Noto Serif TC",Georgia,serif;
+    --sans:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#201D17; --card:#2A261E; --ink:#E9E3D3; --ink2:#A79C88;
+    --blue:#7FA3CC; --blue-soft:rgba(127,163,204,.10);
+    --green:#8FB897; --green-soft:rgba(143,184,151,.10);
+    --gold:#C9A96A; --gold-soft:rgba(201,169,106,.10);
+    --red:#D08770; --red-soft:rgba(208,135,112,.10);
+    --line:rgba(233,227,211,.14); --line-strong:rgba(233,227,211,.30);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#201D17; --card:#2A261E; --ink:#E9E3D3; --ink2:#A79C88;
+    --blue:#7FA3CC; --blue-soft:rgba(127,163,204,.10);
+    --green:#8FB897; --green-soft:rgba(143,184,151,.10);
+    --gold:#C9A96A; --gold-soft:rgba(201,169,106,.10);
+    --red:#D08770; --red-soft:rgba(208,135,112,.10);
+    --line:rgba(233,227,211,.14); --line-strong:rgba(233,227,211,.30);
+  }
+  :root[data-theme="light"]{
+    --bg:#F7F3E9; --card:#FFFDF6; --ink:#2B2620; --ink2:#6E6455;
+    --blue:#1E3A5F; --blue-soft:rgba(30,58,95,.08);
+    --green:#4A6B50; --green-soft:rgba(74,107,80,.09);
+    --gold:#8A6D3B; --gold-soft:rgba(138,109,59,.10);
+    --red:#A64833; --red-soft:rgba(166,72,51,.09);
+    --line:rgba(43,38,32,.16); --line-strong:rgba(43,38,32,.32);
+  }
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.62;margin:0;padding:0 20px 72px;}
+  .wrap{max-width:1060px;margin:0 auto;}
+  header{padding:52px 0 8px;border-bottom:2px solid var(--ink);margin-bottom:10px;}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--ink2);text-transform:uppercase;}
+  h1{font-family:var(--serif);font-size:clamp(28px,4.5vw,40px);font-weight:700;margin:10px 0 6px;text-wrap:balance;}
+  .sub{color:var(--ink2);font-size:15px;max-width:64ch;margin:0 0 22px;}
+  .stats{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--line);margin-bottom:8px;}
+  .stat{flex:1 1 150px;padding:14px 18px 16px 0;border-right:1px solid var(--line);margin-right:18px;}
+  .stat:last-child{border-right:none;}
+  .stat b{display:block;font-family:var(--serif);font-size:26px;font-variant-numeric:tabular-nums;}
+  .stat span{font-size:12.5px;color:var(--ink2);}
+
+  .layer{margin-top:30px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);overflow:hidden;}
+  .layer-head{display:flex;align-items:baseline;gap:14px;padding:13px 20px;border-bottom:1px solid var(--line);}
+  .layer-head .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;padding:3px 9px;border-radius:3px;color:var(--bg);}
+  .layer-head h2{font-family:var(--serif);font-size:19px;margin:0;font-weight:700;}
+  .layer-head .where{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink2);}
+  .l-drive .tag{background:var(--blue);} .l-code .tag{background:var(--green);}
+  .l-db .tag{background:var(--blue);} .l-pub .tag{background:var(--gold);}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px;padding:16px 20px 20px;}
+  .card{border:1px solid var(--line);border-radius:5px;padding:12px 14px;background:var(--bg);}
+  .card h3{font-size:14.5px;margin:0 0 4px;font-weight:600;}
+  .card p{font-size:12.5px;color:var(--ink2);margin:0;line-height:1.55;}
+  .card .m{font-family:var(--mono);font-size:11.5px;}
+  .card.hub{grid-column:1/-1;background:var(--green-soft);border-color:var(--green);}
+  .card.dim{opacity:.62;border-style:dashed;}
+  .card.cold{background:var(--blue-soft);}
+  .badge{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+    padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:1px;}
+  .b-new{background:var(--green-soft);color:var(--green);border:1px solid var(--green);}
+  .b-warn{background:var(--red-soft);color:var(--red);border:1px solid var(--red);}
+  .b-cold{background:var(--blue-soft);color:var(--blue);border:1px solid var(--blue);}
+  .flow{display:flex;align-items:center;gap:12px;justify-content:center;color:var(--ink2);
+    font-family:var(--mono);font-size:12px;padding:14px 0 2px;}
+  .flow .arrow{font-size:17px;color:var(--ink);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  .tblwrap{overflow-x:auto;padding:6px 20px 18px;}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink2);text-align:left;padding:7px 12px;border-bottom:1px solid var(--line-strong);}
+  td{padding:6.5px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
+  .gen{font-family:var(--mono);font-size:10.5px;color:var(--ink2);}
+
+  .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:30px;}
+  .panel{border:1px solid var(--line-strong);border-radius:6px;background:var(--card);padding:16px 20px 18px;}
+  .panel h2{font-family:var(--serif);font-size:17px;margin:0 0 10px;}
+  .panel ul{margin:0;padding-left:18px;font-size:13.5px;}
+  .panel li{margin-bottom:7px;}
+  .panel li::marker{color:var(--ink2);}
+  .ok{color:var(--green);font-weight:600;} .warn{color:var(--red);font-weight:600;}
+  .muted{color:var(--ink2);}
+  code{font-family:var(--mono);font-size:.92em;background:var(--blue-soft);padding:1px 5px;border-radius:3px;}
+  footer{margin-top:36px;font-size:12px;color:var(--ink2);border-top:1px solid var(--line);padding-top:12px;
+    display:flex;flex-wrap:wrap;gap:6px 22px;}
 </style>
-</head>
-<body>
-<div class="card">
-<h1>世界島管委會資料庫</h1>
-<p class="sub">歷年會議・文件・圖說・照片・附件。<br>內容僅供本社區住戶與委員瀏覽，請輸入密碼。</p>
-<div class="field"><label for="pw">密碼</label>
-<input id="pw" type="password" inputmode="numeric" autocomplete="off" placeholder="請輸入共用碼" autofocus></div>
-<button id="btn">解鎖瀏覽</button>
-<div class="status" id="status"></div>
-<div class="foot">密碼請見社區公告，或洽管理委員會<br>世界島社區管理委員會</div>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">World Island · Data Systems</div>
+  <h1>世界島管委會資料系統 — 架構總覽</h1>
+  <p class="sub">收斂工程＋統一站 v2.5（2026-07-16）後的現況。四層架構：Drive 正本 → repo 程式碼 → SQLite 索引核心 → 加密靜態發布。檔案是正本，資料庫是可全量重建的索引；全站單一共用存取碼。</p>
+  <div class="stats">
+    <div class="stat"><b>1 棵</b><span>唯一正本樹（社區資料/）＋3,088 檔歸位</span></div>
+    <div class="stat"><b>73,126 筆</b><span>community.db 索引（8 實表）</span></div>
+    <div class="stat"><b>1 組</b><span>共用存取碼（四發布面一致）</span></div>
+    <div class="stat"><b>v2.5</b><span>統一站：四視圖＋檔案樹＋internal 全上站</span></div>
+  </div>
+</header>
+
+<!-- L1 -->
+<section class="layer l-drive">
+  <div class="layer-head"><span class="tag">L1 正本</span><h2>資料正本層</h2><span class="where">Google Drive／我的雲端硬碟</span></div>
+  <div class="cards">
+    <div class="card hub"><h3>社區資料/ — 唯一正本樹<span class="badge b-new">2026-07-15 收斂</span></h3>
+      <p>社區資產單一屋頂，未來整棵共享／移交給下一屆即完成交接。索引全部進 community.db，檔案永遠留在原位。</p></div>
+    <div class="card"><h3>資料庫/build/</h3><p class="m">community.db（115MB）＋status_map 等建置檔；db 備份 ×2 同夾</p></div>
+    <div class="card"><h3>財報/工作檔/</h3><p class="m">108 檔·989MB：data.json、整理.xlsx、策展表、加密 HTML；<b>世界島財報/</b>＝原始月報正本（110–115 年）</p></div>
+    <div class="card"><h3>會議記錄/</h3><p class="m">164 份 PDF＋OCR 中間產物，共 2,218 檔</p></div>
+    <div class="card"><h3>簡報/</h3><p class="m">83 檔；定版在 20260617/、20260708/</p></div>
+    <div class="card"><h3>知識庫/</h3><p class="m">Obsidian vault 483→462 檔（今日重建）；委員關聯探索用</p></div>
+    <div class="card"><h3>協商資料/</h3><p class="m">4,181 檔（B3／鑑定報告／掉磚熱區／歷屆）</p></div>
+    <div class="card"><h3>11屆管委會/交接資料/</h3><p class="m">導讀模式改造中：分區只留導讀＋自撰文件，快照移 _快照歸檔_20260703/</p></div>
+    <div class="card cold"><h3>來自OneDrive/世界島<span class="badge b-cold">冷歸檔</span></h3>
+      <p class="m">255GB／25,209 檔（94% 為區權會錄影）。02–11 屆歷史正本，索引進 db、永不搬移</p></div>
+    <div class="card dim"><h3>Claude/（個人工作區殘留）</h3><p class="m">社區財報 v1 舊系統 831MB 待第二批清理；機電修繕鏡像（正本在 repo）</p></div>
+  </div>
+</section>
+
+<div class="flow"><span>掃描・解析</span><span class="arrow">↓</span><span class="m">os.walk → 4 parsers → TSV</span></div>
+
+<!-- L2 -->
+<section class="layer l-code">
+  <div class="layer-head"><span class="tag">L2 程式</span><h2>程式碼與 Pipeline 層</h2><span class="where">GitHub repo AustinWeng/Claude · plugins/</span></div>
+  <div class="cards">
+    <div class="card hub"><h3>wi_paths.py — 中央路徑模組<span class="badge b-new">本次新建</span></h3>
+      <p>Drive 根自動偵測（排除殘影掛載）＋legacy／consolidated 雙布局自動切換。全生態系 29 支腳本一律 import 它，<b>硬編碼路徑歸零</b>。檢查：<code>python3 wi_paths.py --check</code></p></div>
+    <div class="card"><h3>hoa-hub/scripts/archive/</h3><p class="m">rebuild_archive.sh 六步：掃描→4 parser→load(冪等 upsert)→extract_texts→drive_links。本次修 2 bug 後全六步首次跑通</p></div>
+    <div class="card"><h3>community-finance/</h3><p class="m">財報 pipeline：update_world_island → build → encrypt_html(AES-GCM) → sync_demo 推兩站</p></div>
+    <div class="card"><h3>legacy_site/<span class="badge b-new">收編</span></h3><p class="m">meetings／meeting_rows 兩表唯一產生鏈（scan→status_map→migrate→build_vault）</p></div>
+    <div class="card"><h3>meeting-minutes/scripts/db_build/<span class="badge b-new">收編</span></h3><p class="m">會議站建置線 9 支（原流落 Drive、零版控）</p></div>
+    <div class="card"><h3>kb/build_kb_vault.py<span class="badge b-new">收編</span></h3><p class="m">知識庫生成器：db＋財報 json＋待辦 → Obsidian wikilink 圖譜</p></div>
+    <div class="card"><h3>PR #50<span class="badge b-warn">待 merge</span></h3><p class="m">archive 腳本本體進 main（修復正本脫鉤）；本工程改動在 claude/relaxed-brahmagupta-d7d602</p></div>
+  </div>
+</section>
+
+<div class="flow"><span>寫入</span><span class="arrow">↓</span><span class="m">sqlite3 · ON CONFLICT upsert</span></div>
+
+<!-- L3 -->
+<section class="layer l-db">
+  <div class="layer-head"><span class="tag">L3 核心</span><h2>community.db — SQLite 索引核心</h2><span class="where">社區資料/資料庫/build/ · 115MB</span></div>
+  <div class="tblwrap"><table>
+    <tr><th>世代</th><th>表</th><th style="text-align:right">筆數</th><th>用途／備註</th></tr>
+    <tr><td class="gen" rowspan="2">會議世代</td><td>meetings</td><td class="n">164</td><td>會議主檔（區權會／管委會／經理日誌）</td></tr>
+    <tr><td>meeting_rows</td><td class="n">25,603</td><td>逐項決議／事項，含 status_norm 正規化欄</td></tr>
+    <tr><td class="gen" rowspan="4">歸檔世代</td><td>documents</td><td class="n">437</td><td>合約·報價·訴訟·辦法；敏感分級 internal 46——v2.5 起亦上站（站內紅標「內部」）</td></tr>
+    <tr><td>drawings</td><td class="n">584</td><td>竣工圖／建築圖（dwg＋pdf）</td></tr>
+    <tr><td>photos</td><td class="n">16,422</td><td>外牆檢測照，棟×面×日期</td></tr>
+    <tr><td>meeting_attachments</td><td class="n">2,855</td><td>02–10 屆會議附件對映</td></tr>
+    <tr><td class="gen" rowspan="2">全文檢索</td><td>document_texts＋FTS5</td><td class="n">1,850</td><td>文件內文（本次 rebuild ＋18 筆）</td></tr>
+    <tr><td>drive_links</td><td class="n">25,211</td><td>檔案路徑 → Drive fileId（開檔連結）</td></tr>
+  </table></div>
+  <div class="cards" style="padding-top:0">
+    <div class="card dim"><h3>已知設計債（第二階段目標）</h3><p class="m">全庫零 foreign key·跨表靠檔案路徑字串 join·金額欄全 TEXT·敏感分級僅 1/8 表·meta 表半過期</p></div>
+  </div>
+</section>
+
+<div class="flow"><span>查詢・組裝・加密</span><span class="arrow">↓</span><span class="m">build_*_site.py → encrypt(PBKDF2 25萬輪＋AES-GCM-256)</span></div>
+
+<!-- L4 -->
+<section class="layer l-pub">
+  <div class="layer-head"><span class="tag">L4 發布</span><h2>發布層 — 靜態加密站群</h2><span class="where">GitHub Pages（public repo）＋Cloud Run</span></div>
+  <div class="cards">
+    <div class="card"><h3>world-island-archive（統一站 v2.5）</h3><p class="m">單頁四視圖：搜尋（全域·新到舊）／會議（164 場·連原始 PDF）／文件（含 internal 紅標）／總覽＋📂 檔案樹（20,298 檔目錄）；lazy 加密 bin ×3（rows 2.5MB·texts 8.1MB·photos 0.5MB，檔名帶 build id 防快取混血）；舊 /docs/ /meetings/ 轉址</p></div>
+    <div class="card"><h3>財報站 ×2</h3><p class="m">austinweng.github.io/世界島財報分析/（入口）＋community-finance-demo（備站），66 個月，byte 同步</p></div>
+    <div class="card"><h3>world-island-feedback</h3><p class="m">住戶意見站（智生活 → Sheet → 每 6h 同步）</p></div>
+    <div class="card"><h3>repair-report（Cloud Run）</h3><p class="m">機電報修全自動系統——生態系中唯一有伺服器的服務</p></div>
+    <div class="card dim"><h3>舊會議站<span class="badge b-new">已下架</span></h3><p class="m">6.7MB 舊頁已換 1.5KB 轉址說明頁（2026-07-15）</p></div>
+  </div>
+</section>
+
+<div class="two">
+  <div class="panel">
+    <h2>工程完成項（皆已驗證）</h2>
+    <ul>
+      <li><span class="ok">遷移</span>：5 夾 3,088 檔 server-side 歸位；config 化 repo 15 檔＋收編 Drive 側 14 支腳本；修 3 個潛伏 bug；rebuild 八表全對基準</li>
+      <li><span class="ok">交接包導讀化</span>：4,736 檔快照移入 _快照歸檔_20260703/，八分區只留導讀＋自撰文件（副本 drift 根絕）</li>
+      <li><span class="ok">共用碼統一</span>：四發布面（資料庫站＋財報 ×2＋意見站）統一為同一組共用碼，python 端到端解密＋verify_unlock 六站健檢全 PASS</li>
+      <li><span class="ok">統一站 v2→v2.5 迭代</span>：修解鎖白屏（loader IIFE）、快取混血防護（bin 版本化）、照片明細 16,422 張 100% 連 Drive、會議事項連原始 PDF（160/164）、全站新到舊、檔案樹側欄、手機優化</li>
+      <li><span class="ok">文件同步</span>：SKILL.md 資料地圖全換新、DEPRECATED 標記 ×3、會議 skill 發布段對齊統一站</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>安全與治理現況</h2>
+    <ul>
+      <li><span class="ok">明文外洩已處置</span>：git 歷史已改寫、舊站已換頁、共用碼已輪替；殘餘 dangling SHA 待 GitHub gc</li>
+      <li><span class="muted">internal 政策（2026-07-16 決策）</span>：46 份內部文件（交接清冊／訴訟卷宗）全站上線＋紅標，與一般內容同一組共用碼——站台受眾定位為委員，存取控管依賴共用碼的發放範圍；反悔＝還原 v2.4.1 的 public 過濾重發布</li>
+      <li><span class="muted">認證模型</span>：單一共用碼＋客戶端 AES-GCM（25 萬輪 PBKDF2）；無法分權／撤銷單人——需要時可上委員第二密碼或 Cloudflare Access</li>
+      <li><span class="warn">待辦</span>：merge PR #54（本工程全部改動）；v1 舊系統 831MB 清理；schema v2（FK＋金額數值化）；三套加密實作統一</li>
+    </ul>
+  </div>
 </div>
-<script>
-(function(){/* 殼 JS 全包 IIFE：document.write 注入 app 後 window 全域仍保留，
-   殼的 const $/unlock 外洩會與 app 的同名宣告相撞（曾致解鎖後白屏 SyntaxError） */
-const SALT="WU0e1KCTxkj7qWq09oUZnw==",IV="C9Eamp21K1GRIvgV",CT="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",ITER=250000;
-const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-const $=id=>document.getElementById(id);
-async function unlock(){
-  const pw=$("pw").value,st=$("status");
-  if(!pw){st.className="status err";st.textContent="請輸入密碼";return;}
-  $("btn").disabled=true;st.className="status ok";st.textContent="解密中…";
-  try{
-    const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
-    const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64d(SALT),iterations:ITER,hash:"SHA-256"},
-      km,{name:"AES-GCM",length:256},false,["decrypt"]);
-    const gz=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64d(IV)},key,b64d(CT));
-    st.textContent="解壓中…";
-    const ds=new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip")));
-    const html=await ds.text();
-    try{sessionStorage.setItem("wi_shared_pw",pw);}catch(_){}
-    document.open("text/html","replace");document.write(html);document.close();
-  }catch(e){$("btn").disabled=false;st.className="status err";st.textContent="密碼錯誤，請重試";$("pw").select();}
-}
-(function(){try{const s=sessionStorage.getItem("wi_shared_pw");
-  if(s){$("pw").value=s;unlock();}}catch(_){}})();
-$("btn").addEventListener("click",unlock);
-$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")unlock();});
-})();
-</script>
-</body>
-</html>
+
+<footer>
+  <span>資料時點：2026-07-16（統一站 v2.5）· 全數字為實測</span>
+  <span>路徑檢查：<code>python3 plugins/hoa-hub/scripts/wi_paths.py --check</code></span>
+  <span>一鍵重建：<code>bash plugins/hoa-hub/scripts/archive/rebuild_archive.sh</code></span>
+</footer>
+</div>
+</body></html>
