@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>世界島管委會資料庫 · 受保護</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%9D%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+font-family:-apple-system,"PingFang TC","Noto Sans TC",system-ui,sans-serif;
+background:linear-gradient(135deg,#1E3A5F 0%,#2D5A8C 55%,#4A90C2 100%);padding:24px}
+.card{width:100%;max-width:390px;background:#fff;border-radius:18px;
+box-shadow:0 20px 60px rgba(15,42,68,.35);padding:40px 32px;text-align:center}
+.badge{width:56px;height:56px;margin:0 auto 18px;border-radius:14px;background:#1E3A5F;
+color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center}
+h1{font-size:20px;color:#1E3A5F;font-weight:700;letter-spacing:.5px}
+.sub{margin-top:8px;font-size:13.5px;color:#64748b;line-height:1.6}
+.field{margin-top:26px;text-align:left}
+label{font-size:12.5px;color:#475569;font-weight:600}
+input{width:100%;margin-top:7px;padding:13px 15px;font-size:16px;border:1.5px solid #cbd5e1;
+border-radius:11px;outline:none;transition:border-color .15s;letter-spacing:2px}
+input:focus{border-color:#2D5A8C}
+button{width:100%;margin-top:18px;padding:13px;font-size:15px;font-weight:700;color:#fff;
+background:#1E3A5F;border:none;border-radius:11px;cursor:pointer;transition:background .15s}
+button:hover{background:#2D5A8C}button:disabled{background:#94a3b8;cursor:default}
+.status{margin-top:14px;font-size:13px;min-height:18px}
+.status.err{color:#dc2626}.status.ok{color:#2D5A8C}
+.foot{margin-top:22px;font-size:11.5px;color:#94a3b8;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+<div class="badge">&#128274;</div>
+<h1>世界島管委會資料庫</h1>
+<p class="sub">歷年會議・文件・圖說・照片・附件。<br>內容僅供本社區住戶與委員瀏覽，請輸入密碼。</p>
+<div class="field"><label for="pw">密碼</label>
+<input id="pw" type="password" inputmode="numeric" autocomplete="off" placeholder="請輸入共用碼" autofocus></div>
+<button id="btn">解鎖瀏覽</button>
+<div class="status" id="status"></div>
+<div class="foot">密碼請見社區公告，或洽管理委員會<br>世界島社區管理委員會</div>
+</div>
+<script>
+(function(){/* 殼 JS 全包 IIFE：document.write 注入 app 後 window 全域仍保留，
+   殼的 const $/unlock 外洩會與 app 的同名宣告相撞（曾致解鎖後白屏 SyntaxError） */
+const SALT="00cn6aGSDwp1GbqXKfQwJQ==",IV="MospB921qHMyW0Hg",CT="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",ITER=250000;
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const $=id=>document.getElementById(id);
+async function unlock(){
+  const pw=$("pw").value,st=$("status");
+  if(!pw){st.className="status err";st.textContent="請輸入密碼";return;}
+  $("btn").disabled=true;st.className="status ok";st.textContent="解密中…";
+  try{
+    const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+    const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64d(SALT),iterations:ITER,hash:"SHA-256"},
+      km,{name:"AES-GCM",length:256},false,["decrypt"]);
+    const gz=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64d(IV)},key,b64d(CT));
+    st.textContent="解壓中…";
+    const ds=new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream("gzip")));
+    const html=await ds.text();
+    try{sessionStorage.setItem("wi_shared_pw",pw);}catch(_){}
+    document.open("text/html","replace");document.write(html);document.close();
+  }catch(e){$("btn").disabled=false;st.className="status err";st.textContent="密碼錯誤，請重試";$("pw").select();}
+}
+(function(){try{const s=sessionStorage.getItem("wi_shared_pw");
+  if(s){$("pw").value=s;unlock();}}catch(_){}})();
+$("btn").addEventListener("click",unlock);
+$("pw").addEventListener("keydown",e=>{if(e.key==="Enter")unlock();});
+})();
+</script>
+</body>
+</html>
